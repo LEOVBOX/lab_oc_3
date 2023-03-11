@@ -6,6 +6,7 @@
 #include "sys/types.h"
 #include "unistd.h"
 #include "sys/stat.h"
+#include "string_ops.h"
 
  unsigned long find_dir_name_ind(const char *dir_path, unsigned long *n)
 {
@@ -18,16 +19,7 @@
 	return result;
 }
 
-char* string_cut(const char* string, const unsigned long* begin_ind, const unsigned long* end_ind)
-{
-	char *result = (char*)malloc(sizeof(char) * *end_ind);
-	for (unsigned long i = *begin_ind, j = 0; j < *end_ind; i++, j++)
-	{
-		result[j] = string[i];
-	}
-	return result;
 
-}
 
 char* crt_new_dir_path(char* old_dir_path, const unsigned long* old_dir_path_len, const unsigned long* begin_ind,
 		const char* new_dir_name)
@@ -41,16 +33,7 @@ char* crt_new_dir_path(char* old_dir_path, const unsigned long* old_dir_path_len
 	return result;
 }
 
-char* string_reverse(const char* string)
-{
-	unsigned long n = strlen(string);
-	char* result = (char*)malloc(n * sizeof(char));
-	for (int i = 0; i < n; i++)
-	{
-		result[i] = string[n - i - 1];
-	}
-	return result;
-}
+
 
 int main(int argc, char* argv[])
 {
@@ -71,12 +54,16 @@ int main(int argc, char* argv[])
 		printf("No such directory %s\n", argv[1]);
 		return 2;
 	}
+
 	unsigned long old_dir_path_len = strlen(argv[1]);
 	unsigned long old_dir_name_ind = find_dir_name_ind(argv[1], &old_dir_path_len);
 	char* old_dir_name = string_cut(argv[1], &old_dir_name_ind, &old_dir_path_len);
 
 	char* new_dir_name = string_reverse(old_dir_name);
 	char* new_dir_path = crt_new_dir_path(argv[1], &old_dir_path_len, &old_dir_name_ind, new_dir_name);
+
+	struct dirent *old = readdir(old_dir);
+
 
 	printf("new dir path: %s\n", new_dir_path);
 	mkdir(new_dir_path, 0644);
@@ -87,6 +74,6 @@ int main(int argc, char* argv[])
 }
 
 /* TODO
- * Скопировать файлы из старой директории в новую 
+ * Скопировать файлы из старой директории в новую
  *
  */
