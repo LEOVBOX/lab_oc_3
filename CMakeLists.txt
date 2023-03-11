@@ -3,4 +3,5 @@ project(lab_oc_3 C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(lab_oc_3 main.c)
+#add_executable(lab_oc_3 test.c)
+add_executable(lab_oc_3 main.c copy_file.c string_ops.c)

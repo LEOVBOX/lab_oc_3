@@ -7,5 +7,5 @@
 
 char* string_reverse(const char* string);
 char* string_cut(const char* string, const unsigned long* begin_ind, const unsigned long* end_ind);
-
+char* string_concat(char* str1, char* str2);
 #endif //LAB_OC_3_STRING_OPS_H

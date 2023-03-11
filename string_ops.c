@@ -24,5 +24,19 @@ char* string_cut(const char* string, const unsigned long* begin_ind, const unsig
 		result[j] = string[i];
 	}
 	return result;
+}
 
+
+char* string_concat(char* str1, char* str2)
+{
+	unsigned long str1_len = strlen(str1);
+	unsigned long str2_len = strlen(str2);
+	unsigned long new_str_len = str1_len + str2_len;
+	char* new_str = (char*)malloc(sizeof(char) * new_str_len);
+	strcpy(new_str, str1);
+	for (unsigned long i = str1_len, j = 0; i < new_str_len; i++, j++)
+	{
+		new_str[i] = str2[j];
+	}
+	return new_str;
 }
