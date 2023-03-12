@@ -3,11 +3,8 @@
 #include "dirent.h"
 #include "mm_malloc.h"
 #include "string.h"
-#include "sys/types.h"
-#include "unistd.h"
 #include "sys/stat.h"
 #include "string_ops.h"
-
 
 
  unsigned long find_dir_name_ind(const char *dir_path, unsigned long *n)
@@ -85,7 +82,7 @@ int main(int argc, char* argv[])
 			old_file_path = string_concat(old_file_path, old_file_name);
 			new_file_name = string_reverse(old_file_name);
 			new_file_path = string_concat(new_file_path, new_file_name);
-			copy_file(old_file_path, new_file_path);
+			copy_file_reverse(old_file_path, new_file_path);
 		}
 	}
 
@@ -100,8 +97,7 @@ int main(int argc, char* argv[])
 }
 
 /* TODO
- * Сделать функцию, создающую путь нового файла
- * Скопировать файлы из старой директории в новую
+ * Сделать вывод запись задом наперед
  *
  *
  */
