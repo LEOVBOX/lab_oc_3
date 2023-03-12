@@ -18,18 +18,20 @@
 	return result;
 }
 
-
-char* crt_new_dir_path(char* old_dir_path, const unsigned long* old_dir_path_len, const unsigned long* begin_ind,
-		const char* new_dir_name)
+void crt_file_path(char* file_path, char* dir_path, char* file_name)
 {
-	char *result = (char*)malloc(sizeof(char) * *old_dir_path_len);
-	strcpy(result, old_dir_path);
-	for (unsigned long i = *begin_ind, j = 0; i < *old_dir_path_len; i++, j++)
-	{
-		result[i] = new_dir_name[j];
-	}
-	return result;
+	strcpy(file_path, dir_path);
+	strcat(file_path, "/");
+	strcat(file_path, file_name);
 }
+
+void crt_new_dir_path(char* old_dir_path, const unsigned long* begin_ind, char* new_dir_path)
+{
+	strcpy(new_dir_path, old_dir_path);
+	// Reversing dir name
+	string_reverse(new_dir_path + (*begin_ind));
+}
+
 
 
 int main(int argc, char* argv[])
@@ -55,33 +57,37 @@ int main(int argc, char* argv[])
 
 	unsigned long old_dir_path_len = strlen(old_dir_path);
 	unsigned long old_dir_name_ind = find_dir_name_ind(old_dir_path, &old_dir_path_len);
-	char* old_dir_name = string_cut(old_dir_path, &old_dir_name_ind, &old_dir_path_len);
 
-	char* new_dir_name = string_reverse(old_dir_name);
-	char* new_dir_path = crt_new_dir_path(old_dir_path, &old_dir_path_len, &old_dir_name_ind, new_dir_name);
 
+	char* new_dir_path = (char*)malloc(sizeof(char) * old_dir_path_len);
+	crt_new_dir_path(old_dir_path, &old_dir_name_ind, new_dir_path);
 
 	printf("new dir path: %s\n", new_dir_path);
 	mkdir(new_dir_path, 0755);
 
 	struct dirent *entry = readdir(old_dir);
 
-	char* old_file_name = NULL;
-	char* old_file_path = NULL;
-	char* new_file_name = NULL;
-	char* new_file_path = NULL;
+	char* old_file_name = (char*)malloc(sizeof(char));
+	char* old_file_path = (char*)malloc(sizeof(char) * strlen(old_dir_path) + 1);
+	char* new_file_name = (char*)malloc(sizeof(char));
+	char* new_file_path = (char*)malloc(sizeof(char));
 
 	while (entry = readdir(old_dir), entry != NULL)
 	{
 		printf("%llu %d %s\n", entry->d_ino, entry->d_type, entry->d_name);
 		if (entry->d_type == DT_REG)
 		{
-			old_file_name = entry->d_name;
-			old_file_path = string_concat(old_dir_path, "/");
-			new_file_path = string_concat(new_dir_path, "/");
-			old_file_path = string_concat(old_file_path, old_file_name);
-			new_file_name = string_reverse(old_file_name);
-			new_file_path = string_concat(new_file_path, new_file_name);
+			// Creating path for old file
+			strcpy(old_file_name, entry->d_name);
+			crt_file_path(old_file_path, old_dir_path, old_file_name);
+
+			// Creating new (reversed) file name.
+			strcpy(new_file_name, old_file_name);
+			string_reverse(new_file_name);
+
+			// Creating path for new file
+			crt_file_path(new_file_path, new_dir_path, new_file_name);
+
 			copy_file_reverse(old_file_path, new_file_path);
 		}
 	}
@@ -90,8 +96,6 @@ int main(int argc, char* argv[])
 	free(new_file_name);
 	free(new_file_path);
 
-	free(old_dir_name);
-	free(new_dir_name);
 	closedir(old_dir);
 	return 0;
 }

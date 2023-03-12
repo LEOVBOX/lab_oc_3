@@ -16,6 +16,11 @@ long opened_file_size(FILE* file)
 int copy_file_reverse(char* from_file_path, char* to_file_path)
 {
 	FILE *from_file = fopen(from_file_path, "r");
+	if (from_file == NULL)
+	{
+		printf("Open %s failed\n", to_file_path);
+	}
+
 	long from_file_size = opened_file_size(from_file);
 	int buf_size;
 	int residual_chars = 0;
@@ -35,10 +40,8 @@ int copy_file_reverse(char* from_file_path, char* to_file_path)
 	FILE *to_file = fopen(to_file_path, "w+");
 	if (to_file == NULL)
 	{
-		int res = creat(to_file_path, 0666);
-		to_file = fopen(to_file_path, "w");
+		printf("Open %s failed\n", to_file_path);
 	}
-
 	for (int i = 0; i < inter_count; i++)
 	{
 		fgets(buf, buf_size+1, from_file);
