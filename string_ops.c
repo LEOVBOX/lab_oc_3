@@ -4,16 +4,22 @@
 #include "mm_malloc.h"
 #include "string.h"
 
-char* string_reverse(const char* string)
+void swap_char(char* a, char* b)
 {
-	unsigned long n = strlen(string);
-	char* result = (char*)malloc(n * sizeof(char));
-	for (int i = 0; i < n; i++)
-	{
-		result[i] = string[n - i - 1];
-	}
-	return result;
+	char temp = *a;
+	*a = *b;
+	*b = temp;
 }
+
+void string_reverse(char* string)
+{
+	size_t len = strlen(string);
+	for (int i = 0; i < len/2; i++)
+	{
+		swap_char(&string[i], &string[len - i - 1]);
+	}
+}
+
 
 char* string_cut(const char* string, const unsigned long* begin_ind, const unsigned long* end_ind)
 {
