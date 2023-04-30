@@ -1,114 +1,68 @@
-//
-// Created by Леонид Шайхутдинов on 17.04.2023.
-//
-
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
-#include <malloc.h>
+#include <fcntl.h>
+#include <errno.h>
 
-#define MAX_BUF_SIZE 4096
+#define PAGE_SIZE 0x1000
+#define SOFT_DIRTY_BIT 55
+#define FILE_SHARED_BIT 61
+#define PAGE_SWAP_BIT 62
+#define PAGE_PRESENT_BIT 63
+#define PFN_MASK 0x7fffffffffffff // 55 единиц
 
-char* string_cat(char* dest, char* source)
-{
-    size_t dest_len = strlen(dest);
-    size_t source_len = strlen(source);
-    if (dest_len < dest_len + source_len);
-    {
-        dest = (char*)realloc(dest, dest_len + source_len);
-        if (dest == NULL)
-        {
-            printf("realloc failed\n");
-        }
-    }
-    strcat(dest, source);
-    return dest;
+static void print_page(uint64_t address, uint64_t data) {
+	printf("0x%-16lx : pfn %-16lx soft-dirty %ld file/shared %ld "
+		   "swapped %ld present %ld\n",
+			address,
+			data & PFN_MASK,
+			(data >> SOFT_DIRTY_BIT) & 1,
+			(data >> FILE_SHARED_BIT) & 1,
+			(data >> PAGE_SWAP_BIT) & 1,
+			(data >> PAGE_PRESENT_BIT) & 1);
 }
 
-long opened_file_size(FILE* file)
+int main(int argc, char *argv[])
 {
-	fseek(file, 0, SEEK_END);
-	long result = ftell(file);
-	fseek(file, 0, SEEK_SET);
-	return result;
-}
-
-int print_file_content(char* path)
-{
-	FILE *file= fopen(path, "r");
-	if (file == NULL)
+	char filename[BUFSIZ];
+	if (argc != 4)
 	{
-		printf("Open %s failed\n", path);
-		return -1;
-	}
-	//printf("file %s opened\n", path);
-
-	long file_size = opened_file_size(file);
-	printf("opened file size = %ld\n", file_size);
-
-	int buf_size;
-	int residual_chars = 0;
-	int iter_count = 1;
-	if (file_size < MAX_BUF_SIZE)
-	{
-		buf_size = (int)file_size;
-	}
-	else
-	{
-		buf_size = MAX_BUF_SIZE;
-		iter_count = (int) file_size / buf_size;
-		residual_chars = (int) file_size % buf_size;
+		printf("Usage: %s pid start_address end_address\n", argv[0]);
+		return 1;
 	}
 
-	char* buf = (char*)malloc(sizeof(char) * buf_size);
-    if (buf == NULL)
-    {
-        printf("malloc failed\n");
-    }
-
-	for (int i = 0; i < iter_count; i++)
+	errno = 0;
+	int pid = (int)strtol(argv[1], NULL, 0);
+	if (errno)
 	{
-		if (fread(buf, 1, buf_size, file) == 0)
+		perror("strtol");
+		return 1;
+	}
+	snprintf(filename, sizeof filename, "/proc/%d/pagemap", pid);
+
+	int fd = open(filename, O_RDONLY);
+	if (fd < 0)
+	{
+		perror("open");
+		return 1;
+	}
+
+	uint64_t start_address = strtoul(argv[2], NULL, 0);
+	uint64_t end_address = strtoul(argv[3], NULL, 0);
+
+	for (uint64_t i = start_address; i < end_address; i += 0x1000)
+	{
+		uint64_t data;
+		uint64_t index = (i / PAGE_SIZE) * sizeof(data);
+		if (pread(fd, &data, sizeof(data), index) != sizeof(data))
 		{
-			printf("fread failed\n");
+			perror("pread");
+			break;
 		}
-		printf("%s", buf);
+		print_page(i, data);
 	}
 
-	if (residual_chars > 0)
-	{
-		free(buf);
-		buf = (char*)malloc(sizeof(char) * residual_chars);
-        if (buf == NULL)
-        {
-            printf("fread failed\n");
-        }
-    
-		fread(buf, 1, residual_chars+1, file);
-        {
-            printf("fread failed\n");
-        }
-		printf("%s", buf);
-	}
-
-	free(buf);
-
-	fclose(file);
-
+	close(fd);
 	return 0;
-}
-
-int main()
-{
-    pid_t pid = getpid();
-    char* pid_str = atoi(pid);
-    printf("pid = %d\n", pid);
-    char* pagemap_str = "/proc/";
-
-    pagemap_str = string_cat(pagemap_str, pid_str);
-    pagemap_str = string_cat(pagemap_str, "/pagemap");
-
-    print_file_content(pagemap_str);
-    
-    return 0;
 }
